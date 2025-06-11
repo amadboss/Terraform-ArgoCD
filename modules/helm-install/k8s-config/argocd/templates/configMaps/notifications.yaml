@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+data:
+  context: | 
+    production: {{ .Values.production_as_strig }}
+    argocdUrl: {{.Values.argocdUrl }}
+  service.webhook.discord: |
+    url: {{ .Values.notification.discord.url }}
+    headers: #optional headers
+    - name: Content-Type
+      value: application/json
+  template.discord-failure-message: |
+    webhook:
+      discord:
+        method: POST
+        path: {{ .Values.notification.discord.urlPath }}
+        body: | 
+          {
+            "content": {{ .Values.notification.discord.body.failure | quote }}
+          }
+  template.discord-success-message: | 
+    webhook:
+      discord:
+        method: POST 
+        path: {{ .Values.notification.discord.urlPath }}
+        body: | 
+          {
+            "content": {{ .Values.notification.discord.body.success | quote }}
+          }
+  trigger.on-health-degraded: |
+    - when: app.status.health.status == 'Degraded'  # trigger condition
+      send: [discord-failure-message] # template names
+  trigger.on-deployed: |
+    - when: {{ .Values.notification.triggers.on_deployed.when }}
+      send: [discord-success-message]
+  subscriptions: |
+    - recipients:
+      - discord
+      triggers: 
+      - on-health-degraded
+    - recipients:
+      - discord
+      triggers: 
+      - on-deployed

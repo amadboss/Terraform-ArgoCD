@@ -1,0 +1,38 @@
+argocd:
+  ingress:
+    name: argocd-server-ingress
+    host: argocd.nunki.co
+  name: argocd-server
+  namespace: argocd
+  certificate:
+    dnsNames:
+    - <dns>
+    name: argocd-certificate
+    secretName: argocd-tls-secret
+cluster_issuer:
+  name: letsencrypt-cluster-issuer
+notification:
+  discord:
+    url: https://discord.com
+    urlPath: <webhook url>
+    body:
+      failure: ':red_circle: Health Status Degraded for app: **{{.app.metadata.name}}**
+        :red_circle:
+
+        {{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+
+        <@688800451093> <@22055795> <@30610506401>
+
+        '
+      success: ':white_check_mark: Successfully deployed app: **{{.app.metadata.name}}**
+        :white_check_mark:
+
+        {{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+
+        '
+  triggers:
+    on_deployed:
+      when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status
+        == 'Healthy' and context.production == 'false'
+production_as_strig: 'true'
+argocdUrl: <argocd url>

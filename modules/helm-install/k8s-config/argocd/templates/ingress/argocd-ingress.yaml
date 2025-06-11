@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "traefik-cert-manager"
+  name: {{.Values.argocd.ingress.name}} 
+  namespace: {{.Values.argocd.namespace}}
+spec:
+  tls:
+  - hosts: 
+    {{- range .Values.argocd.certificate.dnsNames }}
+      - {{ .  }}
+    {{- end }}
+    secretName: {{.Values.argocd.certificate.secretName}} 
+  rules:
+  - host: {{.Values.argocd.ingress.host}}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: argocd-server
+            port: 
+              number: 80
